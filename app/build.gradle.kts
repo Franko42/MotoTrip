@@ -66,6 +66,9 @@ dependencies {
     // Maps (MapLibre Native - Open Source BSD-2-Clause)
     implementation("org.maplibre.gl:android-sdk:11.5.0")
 
+    // WorkManager (Local Periodic Backups)
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+
     // Room
     val roomVersion = "2.6.1"
     implementation("androidx.room:room-runtime:$roomVersion")

@@ -13,5 +13,6 @@ class MotoTripApp : Application() {
         super.onCreate()
         appContainer = DefaultAppContainer(this)
         MapLibre.getInstance(this)
+        com.mototrip.core.backup.PeriodicBackupWorker.schedule(this)
     }
 }

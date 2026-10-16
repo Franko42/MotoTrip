@@ -72,7 +72,37 @@ fun TripDetailScreen(
         }
     }
 
-    val detail = uiState.detail
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    val exportCsvLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("text/csv")
+    ) { uri ->
+        if (uri != null && detail != null) {
+            coroutineScope.launch {
+                try {
+                    val app = context.applicationContext as com.mototrip.MotoTripApp
+                    val db = app.appContainer.database
+                    val tripEntity = db.tripDao().getTripById(detail.trip.id)
+                    if (tripEntity != null) {
+                        val stops = db.stopDao().getStopsByTrip(tripEntity.id)
+                        val fuel = db.fuelEntryDao().getFuelEntriesByTrip(tripEntity.id)
+                        val exp = db.expenseDao().getExpensesByTrip(tripEntity.id)
+                        val csv = com.mototrip.core.backup.BackupManager.exportTripToCsv(tripEntity, stops, fuel, exp)
+
+                        withContext(kotlinx.coroutines.Dispatchers.IO) {
+                            context.contentResolver.openOutputStream(uri)?.use { stream ->
+                                stream.write(csv.toByteArray(Charsets.UTF_8))
+                            }
+                        }
+                        snackbarHostState.showSnackbar("Viaje exportado a CSV con éxito")
+                    }
+                } catch (e: Exception) {
+                    snackbarHostState.showSnackbar("Error al exportar CSV: ${e.message}")
+                }
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -88,6 +118,15 @@ fun TripDetailScreen(
                 },
                 actions = {
                     if (detail != null) {
+                        TextButton(
+                            onClick = {
+                                val filename = "viaje_${detail.trip.name.replace(" ", "_")}_${detail.trip.startedAt}.csv"
+                                exportCsvLauncher.launch(filename)
+                            }
+                        ) {
+                            Text("CSV", color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        }
+
                         IconButton(onClick = { showDeleteConfirmDialog = true }) {
                             Icon(
                                 imageVector = Icons.Default.Delete,
