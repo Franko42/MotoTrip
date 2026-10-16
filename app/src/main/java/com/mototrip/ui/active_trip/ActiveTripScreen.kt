@@ -43,9 +43,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.mototrip.data.local.entity.TripStatus
 import com.mototrip.service.TripTrackingService
+import com.mototrip.ui.maps.TripMapView
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 private val TimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
@@ -59,6 +61,7 @@ fun ActiveTripScreen(
 ) {
     val context = LocalContext.current
     val tripDetail by viewModel.tripDetail.collectAsState()
+    val trackPoints by viewModel.trackPoints.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     var showAddStopDialog by remember { mutableStateOf(false) }
@@ -120,20 +123,16 @@ fun ActiveTripScreen(
                     .padding(16.dp)
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // Status card
+                // Cockpit Telemetry HUD
                 Card(
                     colors = CardDefaults.cardColors(
-                        containerColor = if (trip.status == TripStatus.ACTIVE)
-                            MaterialTheme.colorScheme.primaryContainer
-                        else
-                            MaterialTheme.colorScheme.errorContainer
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
                     ),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Row(
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -141,12 +140,35 @@ fun ActiveTripScreen(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(
-                                text = if (trip.status == TripStatus.ACTIVE) "EN MARCHA" else "EN PAUSA",
-                                style = MaterialTheme.typography.titleLarge
+                                text = if (trip.status == TripStatus.ACTIVE) "● REGISTRANDO GPS" else "⏸ PAUSADO",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = if (trip.status == TripStatus.ACTIVE)
+                                    MaterialTheme.colorScheme.tertiary
+                                else
+                                    MaterialTheme.colorScheme.primary
                             )
                             SuggestionChip(
                                 onClick = {},
-                                label = { Text(trip.status.name) }
+                                label = { Text("${trackPoints.size} pts") }
+                            )
+                        }
+
+                        // Glanceable Distance
+                        val distKm = trip.distanceMeters / 1000.0
+                        Row(
+                            verticalAlignment = Alignment.Bottom,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = String.format(Locale.getDefault(), "%.1f", distKm),
+                                style = MaterialTheme.typography.displayMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "km recorridos",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(bottom = 6.dp)
                             )
                         }
 
@@ -155,20 +177,27 @@ fun ActiveTripScreen(
                             .format(TimeFormatter)
 
                         Text(
-                            text = "Iniciado a las $startTimeStr",
-                            style = MaterialTheme.typography.bodyMedium
+                            text = "Inicio: $startTimeStr${if (!trip.originName.isNullOrBlank()) " · Desde ${trip.originName}" else ""}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-
-                        if (!trip.originName.isNullOrBlank() || !trip.destinationName.isNullOrBlank()) {
-                            Text(
-                                text = "Ruta: ${trip.originName ?: "?"}  ➔  ${trip.destinationName ?: "?"}",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
                     }
                 }
 
-                // Main trip controls (Large touch targets)
+                // Live Map Preview of GPS track
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(240.dp)
+                ) {
+                    TripMapView(
+                        trackPoints = trackPoints,
+                        stops = detail.stops,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+
+                // Main trip controls (Large 56dp glove-friendly touch targets)
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.fillMaxWidth()
@@ -213,7 +242,7 @@ fun ActiveTripScreen(
                 }
 
                 Text(
-                    text = "Acciones rápidas",
+                    text = "Acciones en ruta",
                     style = MaterialTheme.typography.titleMedium
                 )
 
@@ -224,19 +253,25 @@ fun ActiveTripScreen(
                 ) {
                     OutlinedButton(
                         onClick = { showAddStopDialog = true },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
                     ) {
                         Text("+ Parada")
                     }
                     OutlinedButton(
                         onClick = { showAddFuelDialog = true },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
                     ) {
                         Text("+ Nafta")
                     }
                     OutlinedButton(
                         onClick = { showAddExpenseDialog = true },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp)
                     ) {
                         Text("+ Gasto")
                     }
@@ -261,7 +296,7 @@ fun ActiveTripScreen(
                         if (detail.stops.isEmpty()) {
                             Text("No has registrado paradas todavía.", style = MaterialTheme.typography.bodySmall)
                         } else {
-                            detail.stops.forEach { stop ->
+                            for (stop in detail.stops) {
                                 val time = Instant.ofEpochMilli(stop.arrivedAt)
                                     .atZone(ZoneId.systemDefault())
                                     .format(TimeFormatter)
@@ -284,7 +319,7 @@ fun ActiveTripScreen(
                         if (detail.fuelEntries.isEmpty()) {
                             Text("No hay cargas registradas.", style = MaterialTheme.typography.bodySmall)
                         } else {
-                            detail.fuelEntries.forEach { f ->
+                            for (f in detail.fuelEntries) {
                                 val amountFormatted = f.amountMinorUnits / 100.0
                                 val litersStr = f.liters?.let { " ($it L)" } ?: ""
                                 Text("• ${f.currencyCode} $amountFormatted$litersStr - ${f.stationName ?: "Estación"}")
@@ -306,7 +341,7 @@ fun ActiveTripScreen(
                         if (detail.expenses.isEmpty()) {
                             Text("No hay gastos registrados.", style = MaterialTheme.typography.bodySmall)
                         } else {
-                            detail.expenses.forEach { exp ->
+                            for (exp in detail.expenses) {
                                 val amountFormatted = exp.amountMinorUnits / 100.0
                                 Text("• [${exp.category}] ${exp.currencyCode} $amountFormatted ${exp.description ?: ""}")
                             }

@@ -11,21 +11,51 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = AmberPrimaryDark,
+    onPrimary = AmberOnPrimaryDark,
+    primaryContainer = AmberContainerDark,
+    onPrimaryContainer = AmberOnContainerDark,
+    secondary = ElectricBlueDark,
+    onSecondary = DarkBackground,
+    secondaryContainer = DarkSurfaceVariant,
+    onSecondaryContainer = DarkOnSurface,
+    tertiary = EmeraldActiveDark,
+    onTertiary = DarkBackground,
+    background = DarkBackground,
+    onBackground = DarkOnSurface,
+    surface = DarkSurface,
+    onSurface = DarkOnSurface,
+    surfaceVariant = DarkSurfaceVariant,
+    onSurfaceVariant = DarkOnSurfaceVariant,
+    outline = DarkOutline,
+    error = ErrorDark
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+    primary = AmberPrimaryLight,
+    onPrimary = AmberOnPrimaryLight,
+    primaryContainer = AmberContainerLight,
+    onPrimaryContainer = AmberOnContainerLight,
+    secondary = ElectricBlueLight,
+    onSecondary = LightSurface,
+    secondaryContainer = LightSurfaceVariant,
+    onSecondaryContainer = LightOnSurface,
+    tertiary = EmeraldActiveLight,
+    onTertiary = LightSurface,
+    background = LightBackground,
+    onBackground = LightOnSurface,
+    surface = LightSurface,
+    onSurface = LightOnSurface,
+    surfaceVariant = LightSurfaceVariant,
+    onSurfaceVariant = LightOnSurfaceVariant,
+    outline = LightOutline,
+    error = ErrorLight
 )
 
 @Composable
 fun MotoTripTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {

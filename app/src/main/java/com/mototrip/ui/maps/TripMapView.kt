@@ -11,6 +11,16 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
 import com.mototrip.domain.model.Stop
 import com.mototrip.domain.model.TrackPoint
 import org.maplibre.android.camera.CameraUpdateFactory
@@ -27,8 +37,26 @@ fun TripMapView(
     stops: List<Stop>,
     modifier: Modifier = Modifier
 ) {
-    if (trackPoints.isEmpty()) {
-        TrackPolylineCanvas(trackPoints = trackPoints, stops = stops, modifier = modifier)
+    var forceCanvasView by remember { mutableStateOf(false) }
+
+    if (trackPoints.isEmpty() || forceCanvasView) {
+        Box(modifier = modifier) {
+            TrackPolylineCanvas(trackPoints = trackPoints, stops = stops, modifier = Modifier.fillMaxSize())
+            if (trackPoints.isNotEmpty()) {
+                FilterChip(
+                    selected = true,
+                    onClick = { forceCanvasView = false },
+                    label = { Text("Trazado Offline") },
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(8.dp),
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                )
+            }
+        }
         return
     }
 
@@ -67,26 +95,27 @@ fun TripMapView(
                         val latLngList = trackPoints.map { LatLng(it.latitude, it.longitude) }
 
                         if (latLngList.isNotEmpty()) {
-                            // Draw polyline
+                            // Draw high-visibility safety amber polyline
                             map.addPolyline(
                                 PolylineOptions()
                                     .addAll(latLngList)
-                                    .color(android.graphics.Color.parseColor("#1E88E5"))
-                                    .width(5f)
+                                    .color(android.graphics.Color.parseColor("#FF9100"))
+                                    .width(6f)
                             )
 
-                            // Add start and end markers
+                            // Add start marker (Green)
                             map.addMarker(
                                 MarkerOptions()
                                     .position(latLngList.first())
-                                    .title("Inicio")
+                                    .title("Inicio de viaje")
                             )
 
+                            // Add end marker (Blue/Red)
                             if (latLngList.size > 1) {
                                 map.addMarker(
                                     MarkerOptions()
                                         .position(latLngList.last())
-                                        .title("Destino / Fin")
+                                        .title("Posición actual / Fin")
                                 )
                             }
 
@@ -103,15 +132,38 @@ fun TripMapView(
                                 }
                             }
 
-                            // Center and fit camera
-                            val boundsBuilder = LatLngBounds.Builder()
-                            latLngList.forEach { boundsBuilder.include(it) }
-                            val bounds = boundsBuilder.build()
-                            map.easeCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100), 1000)
+                            // Center and fit camera protecting against single or identical coordinates
+                            if (latLngList.size == 1) {
+                                map.easeCamera(CameraUpdateFactory.newLatLngZoom(latLngList.first(), 15.0), 800)
+                            } else {
+                                val first = latLngList.first()
+                                val hasVariation = latLngList.any { it.latitude != first.latitude || it.longitude != first.longitude }
+                                if (hasVariation) {
+                                    val boundsBuilder = LatLngBounds.Builder()
+                                    latLngList.forEach { boundsBuilder.include(it) }
+                                    val bounds = boundsBuilder.build()
+                                    map.easeCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100), 800)
+                                } else {
+                                    map.easeCamera(CameraUpdateFactory.newLatLngZoom(first, 15.0), 800)
+                                }
+                            }
                         }
                     }
                 }
             }
+        )
+
+        FilterChip(
+            selected = false,
+            onClick = { forceCanvasView = true },
+            label = { Text("Ver Trazado") },
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(8.dp),
+            colors = FilterChipDefaults.filterChipColors(
+                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+                labelColor = MaterialTheme.colorScheme.onSurface
+            )
         )
     }
 }

@@ -17,6 +17,8 @@ import com.mototrip.domain.usecase.PauseTripUseCase
 import com.mototrip.domain.usecase.ResumeTripUseCase
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
+import com.mototrip.domain.model.TrackPoint
+import com.mototrip.domain.repository.TripRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -32,7 +34,8 @@ class ActiveTripViewModel(
     private val finishTripUseCase: FinishTripUseCase,
     private val addStopUseCase: AddStopUseCase,
     private val addFuelEntryUseCase: AddFuelEntryUseCase,
-    private val addExpenseUseCase: AddExpenseUseCase
+    private val addExpenseUseCase: AddExpenseUseCase,
+    private val tripRepository: TripRepository
 ) : ViewModel() {
 
     val tripDetail: StateFlow<TripDetail?> = getTripDetailUseCase(tripId)
@@ -40,6 +43,13 @@ class ActiveTripViewModel(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = null
+        )
+
+    val trackPoints: StateFlow<List<TrackPoint>> = tripRepository.getTrackPointsByTrip(tripId)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
         )
 
     private val _userMessage = MutableSharedFlow<String>()
@@ -147,7 +157,8 @@ class ActiveTripViewModel(
             finishTripUseCase: FinishTripUseCase,
             addStopUseCase: AddStopUseCase,
             addFuelEntryUseCase: AddFuelEntryUseCase,
-            addExpenseUseCase: AddExpenseUseCase
+            addExpenseUseCase: AddExpenseUseCase,
+            tripRepository: TripRepository
         ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -159,7 +170,8 @@ class ActiveTripViewModel(
                     finishTripUseCase,
                     addStopUseCase,
                     addFuelEntryUseCase,
-                    addExpenseUseCase
+                    addExpenseUseCase,
+                    tripRepository
                 ) as T
             }
         }

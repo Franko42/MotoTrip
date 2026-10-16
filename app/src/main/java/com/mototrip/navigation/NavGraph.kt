@@ -76,7 +76,8 @@ fun MotoTripNavGraph(
                     finishTripUseCase = appContainer.finishTripUseCase,
                     addStopUseCase = appContainer.addStopUseCase,
                     addFuelEntryUseCase = appContainer.addFuelEntryUseCase,
-                    addExpenseUseCase = appContainer.addExpenseUseCase
+                    addExpenseUseCase = appContainer.addExpenseUseCase,
+                    tripRepository = appContainer.tripRepository
                 )
             )
             ActiveTripScreen(
