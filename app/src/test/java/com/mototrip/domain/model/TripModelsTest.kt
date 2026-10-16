@@ -1,0 +1,107 @@
+package com.mototrip.domain.model
+
+import com.mototrip.data.local.entity.StopType
+import com.mototrip.data.local.entity.TripStatus
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertThrows
+import org.junit.Test
+
+class TripModelsTest {
+
+    @Test
+    fun validTrip_createdSuccessfully() {
+        val now = 1700000000000L
+        val trip = Trip(
+            id = "trip-1",
+            name = "Viaje a las Sierras",
+            originName = "Córdoba",
+            destinationName = "Villa General Belgrano",
+            startedAt = now,
+            status = TripStatus.ACTIVE,
+            createdAt = now,
+            updatedAt = now
+        )
+        assertEquals("trip-1", trip.id)
+        assertEquals(TripStatus.ACTIVE, trip.status)
+        assertEquals(0L, trip.distanceMeters)
+    }
+
+    @Test
+    fun fuelEntry_withValidValues_createdSuccessfully() {
+        val entry = FuelEntry(
+            id = "fuel-1",
+            tripId = "trip-1",
+            stopId = "stop-1",
+            occurredAt = 1700000100000L,
+            amountMinorUnits = 1500000L, // 15,000.00
+            currencyCode = "ARS",
+            liters = 15.5,
+            odometerKm = 12500.0,
+            isFullTank = true
+        )
+        assertEquals(1500000L, entry.amountMinorUnits)
+        assertEquals(15.5, entry.liters)
+    }
+
+    @Test
+    fun fuelEntry_withNegativeAmount_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException::class.java) {
+            FuelEntry(
+                id = "fuel-2",
+                tripId = "trip-1",
+                occurredAt = 1700000100000L,
+                amountMinorUnits = -100L
+            )
+        }
+    }
+
+    @Test
+    fun fuelEntry_withZeroOrNegativeLiters_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException::class.java) {
+            FuelEntry(
+                id = "fuel-3",
+                tripId = "trip-1",
+                occurredAt = 1700000100000L,
+                amountMinorUnits = 1000L,
+                liters = 0.0
+            )
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            FuelEntry(
+                id = "fuel-4",
+                tripId = "trip-1",
+                occurredAt = 1700000100000L,
+                amountMinorUnits = 1000L,
+                liters = -5.0
+            )
+        }
+    }
+
+    @Test
+    fun expense_withNegativeAmount_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException::class.java) {
+            Expense(
+                id = "exp-1",
+                tripId = "trip-1",
+                occurredAt = 1700000200000L,
+                amountMinorUnits = -500L,
+                category = "Peaje"
+            )
+        }
+    }
+
+    @Test
+    fun stop_withValidValues_createdSuccessfully() {
+        val stop = Stop(
+            id = "stop-1",
+            tripId = "trip-1",
+            type = StopType.REST,
+            arrivedAt = 1700000500000L,
+            departedAt = 1700000800000L,
+            name = "Parador El Cóndor"
+        )
+        assertEquals(StopType.REST, stop.type)
+        assertNotNull(stop.departedAt)
+    }
+}
