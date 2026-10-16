@@ -2,9 +2,14 @@
 
 MotoTrip es una aplicación Android personal para registrar viajes en moto: recorrido GPS, tiempos, paradas manuales, combustible, gastos e historial. La aplicación es **local-first**, no requiere cuenta ni backend y prioriza mapas offline.
 
-## Estado de este paquete
+## Estado del proyecto
 
-Este paquete contiene la especificación y las reglas de trabajo para que un agente de desarrollo pueda empezar el proyecto de forma controlada. **No es todavía una aplicación Android compilable**: las decisiones de versiones concretas de Gradle, Android SDK y dependencias deben verificarse al crear el proyecto.
+La aplicación **MotoTrip** cuenta con su MVP completamente implementado (Fases 0 a 4) según las especificaciones de arquitectura, modelo de datos y diseño local-first:
+- **Fase 0**: Esqueleto Android nativo Jetpack Compose con Gradle 8.7, AGP 8.4.2 y Kotlin 2.0.0.
+- **Fase 1**: Persistencia SQLite / Room v1 con migraciones preparadas, DAOs, repositorio transaccional y registro manual completo de viajes, paradas, cargas de combustible y gastos.
+- **Fase 2**: Seguimiento GPS en segundo plano mediante Foreground Service compatible con **Android 16** (`FOREGROUND_SERVICE_LOCATION`), notificación persistente, filtrado de ruido/jitter y detección de pérdida de señal sin interpolación de datos falsos.
+- **Fase 3**: Integración de mapas mediante MapLibre Native SDK (código abierto, sin telemetría) y lienzo vectorial offline (`TrackPolylineCanvas`).
+- **Fase 4**: Copias de seguridad periódicas automatizadas con WorkManager y exportación/importación manual (JSON con validación estricta y CSV) mediante Storage Access Framework.
 
 ## Documentos
 
