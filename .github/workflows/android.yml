@@ -58,3 +58,14 @@ jobs:
           name: MotoTrip-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+
+      - name: Push success status to git
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B ci-status
+          echo "BUILD SUCCESSFUL at $(date -u)" > build-status.txt
+          git add build-status.txt
+          git commit -m "ci: build success verified [skip ci]"
+          git push -f origin ci-status
