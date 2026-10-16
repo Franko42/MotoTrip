@@ -12,6 +12,9 @@ jobs:
     name: Build & Test Android APK
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -29,14 +32,22 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run Unit Tests
-        run: ./gradlew test --stacktrace --info
+        run: |
+          ./gradlew testDebugUnitTest --stacktrace --info > test_output.log 2>&1 || {
+            cat test_output.log | tail -n 200
+            exit 1
+          }
 
-      - name: Upload Test Report
+      - name: Push failure log to git
         if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: unit-test-report
-          path: app/build/reports/tests/
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B ci-log
+          cp test_output.log ci-failure-log.txt
+          git add ci-failure-log.txt
+          git commit -m "ci: capture test failure log [skip ci]"
+          git push -f origin ci-log
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug --stacktrace
