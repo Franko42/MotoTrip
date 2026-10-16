@@ -206,6 +206,19 @@ fun TripDetailScreen(
                     }
                 }
 
+                // Map visualization Card
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(260.dp)
+                ) {
+                    com.mototrip.ui.maps.TripMapView(
+                        trackPoints = uiState.trackPoints,
+                        stops = detail.stops,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+
                 // Financial Totals Card
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(

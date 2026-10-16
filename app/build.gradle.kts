@@ -63,6 +63,9 @@ dependencies {
     // Location (Fused Location Provider)
     implementation("com.google.android.gms:play-services-location:21.3.0")
 
+    // Maps (MapLibre Native - Open Source BSD-2-Clause)
+    implementation("org.maplibre.gl:android-sdk:11.5.0")
+
     // Room
     val roomVersion = "2.6.1"
     implementation("androidx.room:room-runtime:$roomVersion")

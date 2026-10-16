@@ -114,8 +114,7 @@ fun MotoTripNavGraph(
             val detailViewModel: TripDetailViewModel = viewModel(
                 factory = TripDetailViewModel.provideFactory(
                     tripId = tripId,
-                    getTripDetailUseCase = appContainer.getTripDetailUseCase,
-                    deleteTripUseCase = appContainer.deleteTripUseCase
+                    tripRepository = appContainer.tripRepository
                 )
             )
             TripDetailScreen(
