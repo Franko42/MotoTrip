@@ -314,103 +314,12 @@ object BackupManager {
 
     suspend fun createDatabaseSnapshot(database: MotoTripDatabase): BackupPayload {
         return database.withTransaction {
-            val trips = database.tripDao().getActiveOrPausedTrip()?.let { listOf(it) } ?: emptyList()
-            // In Room, get all trips:
-            // Since getAllTripsFlow is a Flow, we can load all trips or query through database directly
-            val cursor = database.query("SELECT * FROM trips", null)
-            val allTrips = mutableListOf<TripEntity>()
-            while (cursor.moveToNext()) {
-                val id = cursor.getString(cursor.getColumnIndexOrThrow("id"))
-                val name = cursor.getString(cursor.getColumnIndexOrThrow("name"))
-                val origin = if (cursor.isNull(cursor.getColumnIndexOrThrow("originName"))) null else cursor.getString(cursor.getColumnIndexOrThrow("originName"))
-                val dest = if (cursor.isNull(cursor.getColumnIndexOrThrow("destinationName"))) null else cursor.getString(cursor.getColumnIndexOrThrow("destinationName"))
-                val startedAt = cursor.getLong(cursor.getColumnIndexOrThrow("startedAt"))
-                val endedAt = if (cursor.isNull(cursor.getColumnIndexOrThrow("endedAt"))) null else cursor.getLong(cursor.getColumnIndexOrThrow("endedAt"))
-                val status = TripStatus.valueOf(cursor.getString(cursor.getColumnIndexOrThrow("status")))
-                val distance = cursor.getLong(cursor.getColumnIndexOrThrow("distanceMeters"))
-                val notes = if (cursor.isNull(cursor.getColumnIndexOrThrow("notes"))) null else cursor.getString(cursor.getColumnIndexOrThrow("notes"))
-                val createdAt = cursor.getLong(cursor.getColumnIndexOrThrow("createdAt"))
-                val updatedAt = cursor.getLong(cursor.getColumnIndexOrThrow("updatedAt"))
-                allTrips.add(TripEntity(id, name, origin, dest, startedAt, endedAt, status, distance, notes, createdAt, updatedAt))
-            }
-            cursor.close()
-
-            val allStops = mutableListOf<StopEntity>()
-            val cStops = database.query("SELECT * FROM stops", null)
-            while (cStops.moveToNext()) {
-                val id = cStops.getString(cStops.getColumnIndexOrThrow("id"))
-                val tripId = cStops.getString(cStops.getColumnIndexOrThrow("tripId"))
-                val type = StopType.valueOf(cStops.getString(cStops.getColumnIndexOrThrow("type")))
-                val arrivedAt = cStops.getLong(cStops.getColumnIndexOrThrow("arrivedAt"))
-                val departedAt = if (cStops.isNull(cStops.getColumnIndexOrThrow("departedAt"))) null else cStops.getLong(cStops.getColumnIndexOrThrow("departedAt"))
-                val lat = if (cStops.isNull(cStops.getColumnIndexOrThrow("latitude"))) null else cStops.getDouble(cStops.getColumnIndexOrThrow("latitude"))
-                val lon = if (cStops.isNull(cStops.getColumnIndexOrThrow("longitude"))) null else cStops.getDouble(cStops.getColumnIndexOrThrow("longitude"))
-                val name = if (cStops.isNull(cStops.getColumnIndexOrThrow("name"))) null else cStops.getString(cStops.getColumnIndexOrThrow("name"))
-                val notes = if (cStops.isNull(cStops.getColumnIndexOrThrow("notes"))) null else cStops.getString(cStops.getColumnIndexOrThrow("notes"))
-                allStops.add(StopEntity(id, tripId, type, arrivedAt, departedAt, lat, lon, name, notes))
-            }
-            cStops.close()
-
-            val allFuel = mutableListOf<FuelEntryEntity>()
-            val cFuel = database.query("SELECT * FROM fuel_entries", null)
-            while (cFuel.moveToNext()) {
-                val id = cFuel.getString(cFuel.getColumnIndexOrThrow("id"))
-                val tripId = cFuel.getString(cFuel.getColumnIndexOrThrow("tripId"))
-                val stopId = if (cFuel.isNull(cFuel.getColumnIndexOrThrow("stopId"))) null else cFuel.getString(cFuel.getColumnIndexOrThrow("stopId"))
-                val occurredAt = cFuel.getLong(cFuel.getColumnIndexOrThrow("occurredAt"))
-                val amount = cFuel.getLong(cFuel.getColumnIndexOrThrow("amountMinorUnits"))
-                val curr = cFuel.getString(cFuel.getColumnIndexOrThrow("currencyCode"))
-                val liters = if (cFuel.isNull(cFuel.getColumnIndexOrThrow("liters"))) null else cFuel.getDouble(cFuel.getColumnIndexOrThrow("liters"))
-                val odo = if (cFuel.isNull(cFuel.getColumnIndexOrThrow("odometerKm"))) null else cFuel.getDouble(cFuel.getColumnIndexOrThrow("odometerKm"))
-                val station = if (cFuel.isNull(cFuel.getColumnIndexOrThrow("stationName"))) null else cFuel.getString(cFuel.getColumnIndexOrThrow("stationName"))
-                val isFull = cFuel.getInt(cFuel.getColumnIndexOrThrow("isFullTank")) == 1
-                allFuel.add(FuelEntryEntity(id, tripId, stopId, occurredAt, amount, curr, liters, odo, station, isFull))
-            }
-            cFuel.close()
-
-            val allExpenses = mutableListOf<ExpenseEntity>()
-            val cExp = database.query("SELECT * FROM expenses", null)
-            while (cExp.moveToNext()) {
-                val id = cExp.getString(cExp.getColumnIndexOrThrow("id"))
-                val tripId = cExp.getString(cExp.getColumnIndexOrThrow("tripId"))
-                val stopId = if (cExp.isNull(cExp.getColumnIndexOrThrow("stopId"))) null else cExp.getString(cExp.getColumnIndexOrThrow("stopId"))
-                val occurredAt = cExp.getLong(cExp.getColumnIndexOrThrow("occurredAt"))
-                val amount = cExp.getLong(cExp.getColumnIndexOrThrow("amountMinorUnits"))
-                val curr = cExp.getString(cExp.getColumnIndexOrThrow("currencyCode"))
-                val cat = cExp.getString(cExp.getColumnIndexOrThrow("category"))
-                val desc = if (cExp.isNull(cExp.getColumnIndexOrThrow("description"))) null else cExp.getString(cExp.getColumnIndexOrThrow("description"))
-                allExpenses.add(ExpenseEntity(id, tripId, stopId, occurredAt, amount, curr, cat, desc))
-            }
-            cExp.close()
-
-            val allPoints = mutableListOf<TrackPointEntity>()
-            val cPoints = database.query("SELECT * FROM track_points", null)
-            while (cPoints.moveToNext()) {
-                val id = cPoints.getString(cPoints.getColumnIndexOrThrow("id"))
-                val tripId = cPoints.getString(cPoints.getColumnIndexOrThrow("tripId"))
-                val timestamp = cPoints.getLong(cPoints.getColumnIndexOrThrow("timestamp"))
-                val lat = cPoints.getDouble(cPoints.getColumnIndexOrThrow("latitude"))
-                val lon = cPoints.getDouble(cPoints.getColumnIndexOrThrow("longitude"))
-                val acc = if (cPoints.isNull(cPoints.getColumnIndexOrThrow("accuracyMeters"))) null else cPoints.getFloat(cPoints.getColumnIndexOrThrow("accuracyMeters"))
-                val spd = if (cPoints.isNull(cPoints.getColumnIndexOrThrow("speedMps"))) null else cPoints.getFloat(cPoints.getColumnIndexOrThrow("speedMps"))
-                val alt = if (cPoints.isNull(cPoints.getColumnIndexOrThrow("altitudeMeters"))) null else cPoints.getDouble(cPoints.getColumnIndexOrThrow("altitudeMeters"))
-                allPoints.add(TrackPointEntity(id, tripId, timestamp, lat, lon, acc, spd, alt))
-            }
-            cPoints.close()
-
-            val allEvents = mutableListOf<TripEventEntity>()
-            val cEv = database.query("SELECT * FROM trip_events", null)
-            while (cEv.moveToNext()) {
-                val id = cEv.getString(cEv.getColumnIndexOrThrow("id"))
-                val tripId = cEv.getString(cEv.getColumnIndexOrThrow("tripId"))
-                val timestamp = cEv.getLong(cEv.getColumnIndexOrThrow("timestamp"))
-                val type = TripEventType.valueOf(cEv.getString(cEv.getColumnIndexOrThrow("eventType")))
-                val lat = if (cEv.isNull(cEv.getColumnIndexOrThrow("latitude"))) null else cEv.getDouble(cEv.getColumnIndexOrThrow("latitude"))
-                val lon = if (cEv.isNull(cEv.getColumnIndexOrThrow("longitude"))) null else cEv.getDouble(cEv.getColumnIndexOrThrow("longitude"))
-                val details = if (cEv.isNull(cEv.getColumnIndexOrThrow("details"))) null else cEv.getString(cEv.getColumnIndexOrThrow("details"))
-                allEvents.add(TripEventEntity(id, tripId, timestamp, type, lat, lon, details))
-            }
-            cEv.close()
+            val allTrips = database.tripDao().getAllTrips()
+            val allStops = database.stopDao().getAllStops()
+            val allFuel = database.fuelEntryDao().getAllFuelEntries()
+            val allExpenses = database.expenseDao().getAllExpenses()
+            val allPoints = database.trackPointDao().getAllTrackPoints()
+            val allEvents = database.tripEventDao().getAllTripEvents()
 
             BackupPayload(
                 trips = allTrips,

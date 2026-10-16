@@ -21,6 +21,9 @@ interface TrackPointDao {
     @Query("SELECT * FROM track_points WHERE tripId = :tripId ORDER BY timestamp ASC")
     fun getTrackPointsByTripFlow(tripId: String): Flow<List<TrackPointEntity>>
 
+    @Query("SELECT * FROM track_points ORDER BY timestamp ASC")
+    suspend fun getAllTrackPoints(): List<TrackPointEntity>
+
     @Query("SELECT COUNT(*) FROM track_points WHERE tripId = :tripId")
     suspend fun getTrackPointsCount(tripId: String): Int
 

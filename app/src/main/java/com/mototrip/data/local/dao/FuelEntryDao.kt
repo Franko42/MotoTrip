@@ -23,6 +23,9 @@ interface FuelEntryDao {
     @Query("SELECT * FROM fuel_entries WHERE id = :entryId")
     suspend fun getFuelEntryById(entryId: String): FuelEntryEntity?
 
+    @Query("SELECT * FROM fuel_entries ORDER BY occurredAt ASC")
+    suspend fun getAllFuelEntries(): List<FuelEntryEntity>
+
     @Query("SELECT * FROM fuel_entries WHERE tripId = :tripId ORDER BY occurredAt ASC")
     suspend fun getFuelEntriesByTrip(tripId: String): List<FuelEntryEntity>
 

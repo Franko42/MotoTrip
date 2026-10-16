@@ -23,6 +23,9 @@ interface ExpenseDao {
     @Query("SELECT * FROM expenses WHERE id = :expenseId")
     suspend fun getExpenseById(expenseId: String): ExpenseEntity?
 
+    @Query("SELECT * FROM expenses ORDER BY occurredAt ASC")
+    suspend fun getAllExpenses(): List<ExpenseEntity>
+
     @Query("SELECT * FROM expenses WHERE tripId = :tripId ORDER BY occurredAt ASC")
     suspend fun getExpensesByTrip(tripId: String): List<ExpenseEntity>
 

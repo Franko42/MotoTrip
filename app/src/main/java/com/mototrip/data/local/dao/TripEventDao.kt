@@ -21,6 +21,9 @@ interface TripEventDao {
     @Query("SELECT * FROM trip_events WHERE tripId = :tripId ORDER BY timestamp ASC")
     fun getTripEventsByTripFlow(tripId: String): Flow<List<TripEventEntity>>
 
+    @Query("SELECT * FROM trip_events ORDER BY timestamp ASC")
+    suspend fun getAllTripEvents(): List<TripEventEntity>
+
     @Query("DELETE FROM trip_events WHERE tripId = :tripId")
     suspend fun deleteTripEventsByTrip(tripId: String)
 }
