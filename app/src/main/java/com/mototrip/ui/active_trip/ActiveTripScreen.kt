@@ -39,8 +39,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.mototrip.data.local.entity.TripStatus
+import com.mototrip.service.TripTrackingService
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -55,6 +57,7 @@ fun ActiveTripScreen(
     onTripFinished: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val tripDetail by viewModel.tripDetail.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -172,7 +175,10 @@ fun ActiveTripScreen(
                 ) {
                     if (trip.status == TripStatus.ACTIVE) {
                         FilledTonalButton(
-                            onClick = { viewModel.pauseTrip() },
+                            onClick = {
+                                viewModel.pauseTrip()
+                                TripTrackingService.pauseTracking(context, trip.id)
+                            },
                             modifier = Modifier
                                 .weight(1f)
                                 .height(56.dp)
@@ -181,7 +187,10 @@ fun ActiveTripScreen(
                         }
                     } else {
                         Button(
-                            onClick = { viewModel.resumeTrip() },
+                            onClick = {
+                                viewModel.resumeTrip()
+                                TripTrackingService.resumeTracking(context, trip.id)
+                            },
                             modifier = Modifier
                                 .weight(1f)
                                 .height(56.dp)
@@ -344,6 +353,7 @@ fun ActiveTripScreen(
             onConfirm = { distanceKm ->
                 showFinishDialog = false
                 viewModel.finishTrip(distanceKm)
+                TripTrackingService.stopTracking(context)
             }
         )
     }

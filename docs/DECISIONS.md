@@ -15,7 +15,8 @@
 - No incluir navegación giro a giro en v1.
 
 ## Deben verificarse antes de implementarse
-- `minSdk`, `targetSdk` y versiones exactas de plugins/dependencias.
+- `minSdk` fijado en 26, `targetSdk` preparado para Android 15/16 (API 35/36).
+- Compatibilidad con Android 16: cumplimiento estricto de `FOREGROUND_SERVICE_LOCATION`, verificación previa de permisos en tiempo de ejecución antes de `startForeground()` y restricción de inicio exclusivo con Activity visible en primer plano.
 - Proveedor y licencia de datos cartográficos offline.
 - Estrategia concreta de descarga, almacenamiento y atribución de mapas.
 - Uso de Fused Location Provider frente a una alternativa menos dependiente de Google Play services.

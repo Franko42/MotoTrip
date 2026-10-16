@@ -37,7 +37,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.mototrip.data.local.entity.TripStatus
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
+import com.mototrip.service.TripTrackingService
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,12 +54,57 @@ fun HomeScreen(
     onNavigateToHistory: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val activeTrip by viewModel.activeTrip.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var showStartDialog by remember { mutableStateOf(false) }
 
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val locationGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        if (locationGranted) {
+            showStartDialog = true
+        } else {
+            // Permissions denied, user can still proceed with manual mode
+            showStartDialog = true
+        }
+    }
+
+    fun requestPermissionsAndStart() {
+        val permissionsToRequest = mutableListOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+
+        val allGranted = permissionsToRequest.all {
+            ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+        }
+
+        if (allGranted) {
+            showStartDialog = true
+        } else {
+            permissionLauncher.launch(permissionsToRequest.toTypedArray())
+        }
+    }
+
     LaunchedEffect(Unit) {
         viewModel.tripStartedEvent.collect { tripId ->
+            val hasLocation = ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
+            if (hasLocation) {
+                TripTrackingService.startTracking(context, tripId)
+            }
             onNavigateToActiveTrip(tripId)
         }
     }
@@ -144,7 +196,7 @@ fun HomeScreen(
             } else {
                 // No active trip -> Primary action is to start a trip
                 Button(
-                    onClick = { showStartDialog = true },
+                    onClick = { requestPermissionsAndStart() },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(64.dp)
