@@ -67,6 +67,7 @@ fun TripDetailScreen(
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val detail = uiState.detail
     val snackbarHostState = remember { SnackbarHostState() }
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
 
@@ -217,8 +218,8 @@ fun TripDetailScreen(
                             style = MaterialTheme.typography.bodyMedium
                         )
 
-                        trip.endedAt?.let { endMs ->
-                            val endStr = Instant.ofEpochMilli(endMs)
+                        if (trip.endedAt != null) {
+                            val endStr = Instant.ofEpochMilli(trip.endedAt)
                                 .atZone(ZoneId.systemDefault())
                                 .format(DateTimeFormat)
                             Text(
@@ -245,10 +246,11 @@ fun TripDetailScreen(
                         )
 
                         // Cost per km
-                        uiState.costPerKm?.let { cost ->
+                        val costPerKm = uiState.costPerKm
+                        if (costPerKm != null) {
                             val primaryCurrency = uiState.moneyTotals.firstOrNull()?.currencyCode ?: ""
                             Text(
-                                text = String.format(Locale.getDefault(), "Costo estimado: %.2f %s / km", cost, primaryCurrency),
+                                text = String.format(Locale.getDefault(), "Costo estimado: %.2f %s / km", costPerKm, primaryCurrency),
                                 style = MaterialTheme.typography.bodyMedium
                             )
                         }
@@ -282,7 +284,7 @@ fun TripDetailScreen(
                         if (uiState.moneyTotals.isEmpty()) {
                             Text("No se registraron gastos en este viaje.", style = MaterialTheme.typography.bodyMedium)
                         } else {
-                            uiState.moneyTotals.forEach { total ->
+                            for (total in uiState.moneyTotals) {
                                 val fuel = total.fuelAmountMinorUnits / 100.0
                                 val other = total.otherExpensesMinorUnits / 100.0
                                 val grandTotal = total.totalAmountMinorUnits / 100.0
@@ -329,7 +331,7 @@ fun TripDetailScreen(
                         if (detail.stops.isEmpty()) {
                             Text("No se registraron paradas.", style = MaterialTheme.typography.bodySmall)
                         } else {
-                            detail.stops.forEach { stop ->
+                            for (stop in detail.stops) {
                                 val time = Instant.ofEpochMilli(stop.arrivedAt)
                                     .atZone(ZoneId.systemDefault())
                                     .format(DateTimeFormat)
@@ -355,7 +357,7 @@ fun TripDetailScreen(
                         if (detail.fuelEntries.isEmpty()) {
                             Text("No hay cargas de combustible.", style = MaterialTheme.typography.bodySmall)
                         } else {
-                            detail.fuelEntries.forEach { f ->
+                            for (f in detail.fuelEntries) {
                                 val amount = f.amountMinorUnits / 100.0
                                 val pricePerLiter = TripCalculations.calculatePricePerLiter(f.amountMinorUnits, f.liters)
                                 val priceStr = pricePerLiter?.let { String.format(Locale.getDefault(), " (%.2f %s/L)", it, f.currencyCode) } ?: ""
@@ -384,7 +386,7 @@ fun TripDetailScreen(
                         if (detail.expenses.isEmpty()) {
                             Text("No hay otros gastos.", style = MaterialTheme.typography.bodySmall)
                         } else {
-                            detail.expenses.forEach { exp ->
+                            for (exp in detail.expenses) {
                                 val amount = exp.amountMinorUnits / 100.0
                                 Text("• [${exp.category}] ${exp.currencyCode} $amount: ${exp.description ?: ""}")
                             }
