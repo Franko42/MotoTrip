@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">MotoTrip</string>
+    <string name="home_title">MotoTrip</string>
+    <string name="home_placeholder_message">Bienvenido a MotoTrip. Tu compañero de viajes en moto offline y privado.</string>
+</resources>
