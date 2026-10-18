@@ -224,16 +224,16 @@ class TripCalculationsTest {
 
     @Test
     fun calculateGpsSpeedStatistics_accuratelyFiltersAnomaliesAndSeparatesAverages() {
-        val start = 1000L
-        val end = 1000L + 3600_000L // 1 hour trip
+        val start = 10_000L
+        val end = 60_000L // 50-second continuous tracking segment without signal gaps
 
-        val p1 = TrackPoint("p1", "t1", 1000L, -34.6037, -58.3816, 5.0f, 10.0f, 20.0) // 10 m/s = 36 km/h
-        val p2 = TrackPoint("p2", "t1", 1000L + 1800_000L, -34.8000, -58.3816, 8.0f, 20.0f, 20.0) // 20 m/s = 72 km/h
+        val p1 = TrackPoint("p1", "t1", 10_000L, -34.6000, -58.3800, 5.0f, 10.0f, 20.0) // 10 m/s = 36 km/h
+        val p2 = TrackPoint("p2", "t1", 25_000L, -34.6025, -58.3800, 8.0f, 20.0f, 20.0) // 20 m/s = 72 km/h (delta = 15s < 90s)
         // Inaccurate point (> 50m accuracy) -> should be discarded
-        val pBad = TrackPoint("pBad", "t1", 1000L + 2000_000L, -34.8010, -58.3816, 80.0f, 25.0f, 20.0)
+        val pBad = TrackPoint("pBad", "t1", 35_000L, -34.6030, -58.3800, 80.0f, 25.0f, 20.0)
         // Teleport spike -> impossible speed jump (> 70 m/s) -> should be discarded
-        val pJump = TrackPoint("pJump", "t1", 1000L + 2001_000L, -30.0000, -58.3816, 5.0f, 200.0f, 20.0)
-        val p3 = TrackPoint("p3", "t1", end, -34.8500, -58.3816, 10.0f, 15.0f, 20.0)
+        val pJump = TrackPoint("pJump", "t1", 40_000L, -30.0000, -58.3800, 5.0f, 200.0f, 20.0)
+        val p3 = TrackPoint("p3", "t1", 60_000L, -34.6060, -58.3800, 10.0f, 15.0f, 20.0) // (delta from p2 = 35s < 90s)
 
         val stats = TripCalculations.calculateGpsSpeedStatistics(listOf(p1, p2, pBad, pJump, p3), start, end)
 
@@ -247,6 +247,28 @@ class TripCalculationsTest {
         // Moving speed vs total speed
         assertTrue(stats.averageMovingSpeedKmh is CalculationResult.Confirmed)
         assertTrue(stats.averageTotalSpeedKmh is CalculationResult.Confirmed)
+        assertTrue(stats.isCoverageSufficient)
+    }
+
+    @Test
+    fun calculateGpsSpeedStatistics_whenSignalGapsDetected_marksMaxSpeedEstimatedAndReportsNotes() {
+        val start = 1000L
+        val end = 1000L + 3600_000L // 1 hour trip
+
+        // Large time gap (1800s > 90s threshold) between p1 and p2 represents a tracking/signal interruption
+        val p1 = TrackPoint("p1", "t1", 1000L, -34.6037, -58.3816, 5.0f, 10.0f, 20.0) // 10 m/s = 36 km/h
+        val p2 = TrackPoint("p2", "t1", 1000L + 1800_000L, -34.8000, -58.3816, 8.0f, 20.0f, 20.0) // 20 m/s = 72 km/h
+
+        val stats = TripCalculations.calculateGpsSpeedStatistics(listOf(p1, p2), start, end)
+
+        assertEquals(2, stats.validPointsCount)
+        assertEquals(0, stats.discardedPointsCount)
+        assertFalse(stats.isCoverageSufficient)
+        assertNotNull(stats.coverageNotes)
+
+        // Max speed must be marked as Estimated due to signal gaps
+        assertTrue(stats.maxValidSpeedKmh is CalculationResult.Estimated)
+        assertEquals(72.0, (stats.maxValidSpeedKmh as CalculationResult.Estimated).value, 0.5)
     }
 
     // ==========================================

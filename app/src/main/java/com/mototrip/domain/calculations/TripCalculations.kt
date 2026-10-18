@@ -314,10 +314,16 @@ object TripCalculations {
                 (totalMinorUnitsWithLiters.toDouble() / 100.0) / totalLitersForPrice
             } else null
 
-            // Determine consumption L/100km to use
+            // Determine consumption L/100km to use:
+            // Prefer confirmed trip consumption (two full tanks with odometers).
+            // If not confirmed, prefer motorcycle reference consumption if available to prevent end-of-trip fuel fills from distorting trip costs.
+            // Fallback to estimated trip consumption from total liters loaded, if any.
             val tripConsumptionResult = calculateTripFuelConsumption(distanceMeters, currencyFuel)
-            val effectiveL100 = tripConsumptionResult.valueOrNull
-                ?: referenceConsumptionL100?.takeIf { it > 0.0 }
+            val effectiveL100 = if (tripConsumptionResult is CalculationResult.Confirmed) {
+                tripConsumptionResult.value
+            } else {
+                referenceConsumptionL100?.takeIf { it > 0.0 } ?: tripConsumptionResult.valueOrNull
+            }
 
             val estimatedFuelCostResult: CalculationResult<Long> = when {
                 distanceKm <= 0.0 -> {
