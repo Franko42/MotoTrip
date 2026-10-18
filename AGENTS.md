@@ -16,6 +16,7 @@ Antes de implementar, leer todos los documentos de `docs/` relevantes para la ta
 6. Si hay una ambigüedad que afecta arquitectura, privacidad, persistencia o comportamiento, detenerse y preguntar antes de asumir.
 7. Mantener el README y la documentación actualizados cuando una decisión cambie.
 8. No afirmar que algo compila o funciona sin haberlo verificado.
+9. **Compilación y APKs exclusivamente en GitHub Actions**: No intentar compilar localmente descargando Java/JDK, Gradle o imágenes Docker de desarrollo. El proyecto utiliza GitHub Actions (`.github/workflows/android.yml`) para compilar, correr tests unitarios y generar los APKs. Las verificaciones de compilación se realizan monitoreando los workflows de GitHub Actions o revisando las ramas `ci-status` / `ci-log`.
 
 ## 3. Restricciones técnicas
 
@@ -66,7 +67,7 @@ Antes de implementar, leer todos los documentos de `docs/` relevantes para la ta
 
 Una tarea solo se considera terminada cuando:
 - el cambio respeta la especificación;
-- compila, si el entorno permite compilar;
-- las pruebas relevantes pasan, o se documenta por qué no pudieron ejecutarse;
+- compila y pasa pruebas en GitHub Actions CI (sin descargar herramientas locales de compilación);
+- las pruebas relevantes pasan, o se documenta el estado verificado en CI;
 - no se añadieron funciones fuera de alcance;
 - se resumen los archivos modificados y las verificaciones realizadas.

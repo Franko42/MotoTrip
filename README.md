@@ -31,7 +31,11 @@ La aplicación **MotoTrip** cuenta con su MVP completamente implementado (Fases 
 3. Abrí la carpeta del repositorio en tu agente de desarrollo.
 4. Pedile que lea `AGENTS.md` y todos los documentos referenciados antes de modificar archivos.
 5. Empezá con `prompts/01-bootstrap-project.md`. Pedile que proponga un plan primero y que no implemente fases posteriores todavía.
-6. Revisá el diff y ejecutá las pruebas antes de aceptar cada fase.
+6. Revisá el diff y verificá las pruebas y compilación mediante el pipeline de GitHub Actions (`.github/workflows/android.yml`).
+
+## Compilación y CI/CD
+
+El proyecto delega la compilación, la ejecución de pruebas unitarias y la generación de binarios APK a **GitHub Actions**. El entorno local de desarrollo se mantiene ligero y no requiere la descarga de Java/JDK ni de Gradle.
 
 ## Stack propuesto
 

@@ -47,3 +47,8 @@
 - **Redireccionamientos HTTP**: Las descargas siguen manualmente hasta 8 redireccionamientos (HTTP 302/307/308) correspondientes a los enlaces de almacenamiento AWS S3 de GitHub Releases.
 - **Compatibilidad offline-first**: La búsqueda automática en inicio no bloquea ni muestra mensajes de error intrusivos si no hay conexión a internet; la búsqueda manual desde el menú notifica el estado detallado.
 
+## Entorno de compilación y CI/CD (GitHub Actions)
+- **Compilación y generación de APKs en GitHub Actions**: Toda compilación, validación de tests unitarios y generación de binarios APK (`app-debug.apk`) se delega exclusivamente a GitHub Actions (`.github/workflows/android.yml`).
+- **Entorno local ligero**: El entorno de trabajo local no debe descargar ni almacenar JDKs, SDKs pesados de Android, Gradle o imágenes de contenedor para compilar localmente.
+- **Trazabilidad de builds**: Las fallas de compilación o de pruebas se inspeccionan a través del historial de GitHub Actions o la rama `ci-log` (`ci-failure-log.txt`), y los éxitos en `ci-status` (`build-status.txt`).
+
