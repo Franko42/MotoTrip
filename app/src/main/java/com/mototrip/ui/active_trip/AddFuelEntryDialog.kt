@@ -30,7 +30,8 @@ fun AddFuelEntryDialog(
         liters: Double?,
         odometerKm: Double?,
         stationName: String?,
-        isFullTank: Boolean
+        isFullTank: Boolean,
+        notes: String?
     ) -> Unit
 ) {
     var amountText by remember { mutableStateOf("") }
@@ -39,6 +40,7 @@ fun AddFuelEntryDialog(
     var odometerText by remember { mutableStateOf("") }
     var stationName by remember { mutableStateOf("") }
     var isFullTank by remember { mutableStateOf(false) }
+    var notesText by remember { mutableStateOf("") }
 
     val isValid = (amountText.toDoubleOrNull() ?: -1.0) >= 0.0
 
@@ -78,6 +80,13 @@ fun AddFuelEntryDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                OutlinedTextField(
+                    value = notesText,
+                    onValueChange = { notesText = it },
+                    label = { Text("Notas (opcional)") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
@@ -97,7 +106,8 @@ fun AddFuelEntryDialog(
                     val amount = amountText.toDoubleOrNull() ?: 0.0
                     val liters = litersText.toDoubleOrNull()?.takeIf { it > 0 }
                     val odo = odometerText.toDoubleOrNull()?.takeIf { it >= 0 }
-                    onConfirm(amount, currencyCode, liters, odo, stationName, isFullTank)
+                    val notes = notesText.takeIf { it.isNotBlank() }
+                    onConfirm(amount, currencyCode, liters, odo, stationName, isFullTank, notes)
                 }
             ) {
                 Text("Guardar")

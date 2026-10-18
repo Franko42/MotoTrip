@@ -288,7 +288,7 @@ fun ActiveTripScreen(
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(
                         modifier = Modifier.padding(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
                             text = "Paradas manuales (${detail.stops.size})",
@@ -298,10 +298,42 @@ fun ActiveTripScreen(
                             Text("No has registrado paradas todavía.", style = MaterialTheme.typography.bodySmall)
                         } else {
                             for (stop in detail.stops) {
-                                val time = Instant.ofEpochMilli(stop.arrivedAt)
+                                val arrTime = Instant.ofEpochMilli(stop.arrivedAt)
                                     .atZone(ZoneId.systemDefault())
                                     .format(TimeFormatter)
-                                Text("• [$time] ${stop.type.name} - ${stop.name ?: "Sin nombre"}")
+                                val durationMillis = com.mototrip.domain.calculations.TripCalculations.calculateStopDurationMillis(
+                                    stop.arrivedAt,
+                                    stop.departedAt
+                                )
+                                val durationText = if (durationMillis != null) {
+                                    val minutes = durationMillis / 60000
+                                    "${minutes} min"
+                                } else {
+                                    "Duración desconocida (en curso)"
+                                }
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text("• [$arrTime] ${stop.type.name} - ${stop.name ?: "Sin nombre"}")
+                                        Text(
+                                            text = "   $durationText${if (!stop.notes.isNullOrBlank()) " · ${stop.notes}" else ""}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    if (stop.departedAt == null) {
+                                        OutlinedButton(
+                                            onClick = { viewModel.departStop(stop) },
+                                            modifier = Modifier.padding(start = 8.dp)
+                                        ) {
+                                            Text("Registrar salida", style = MaterialTheme.typography.labelMedium)
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -323,7 +355,9 @@ fun ActiveTripScreen(
                             for (f in detail.fuelEntries) {
                                 val amountFormatted = f.amountMinorUnits / 100.0
                                 val litersStr = f.liters?.let { " ($it L)" } ?: ""
-                                Text("• ${f.currencyCode} $amountFormatted$litersStr - ${f.stationName ?: "Estación"}")
+                                val fullTankStr = if (f.isFullTank) " [Tanque lleno]" else ""
+                                val notesStr = if (!f.notes.isNullOrBlank()) " · ${f.notes}" else ""
+                                Text("• ${f.currencyCode} $amountFormatted$litersStr$fullTankStr - ${f.stationName ?: "Estación"}$notesStr")
                             }
                         }
                     }
@@ -366,9 +400,9 @@ fun ActiveTripScreen(
     if (showAddFuelDialog) {
         AddFuelEntryDialog(
             onDismiss = { showAddFuelDialog = false },
-            onConfirm = { amount, currency, liters, odo, station, isFull ->
+            onConfirm = { amount, currency, liters, odo, station, isFull, notes ->
                 showAddFuelDialog = false
-                viewModel.addFuelEntry(amount, currency, liters, odo, station, isFull, null)
+                viewModel.addFuelEntry(amount, currency, liters, odo, station, isFull, notes, null)
             }
         )
     }

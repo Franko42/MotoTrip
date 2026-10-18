@@ -228,10 +228,53 @@ class TripRepositoryImpl(
                 name = trip.name,
                 originName = trip.originName,
                 destinationName = trip.destinationName,
+                startedAt = trip.startedAt,
+                endedAt = trip.endedAt,
                 notes = trip.notes,
                 updatedAt = System.currentTimeMillis()
             )
             tripDao.updateTrip(updated)
+        }
+    }
+
+    override suspend fun updateTripDates(tripId: String, startedAt: Long, endedAt: Long?): Result<Unit> = withContext(ioDispatcher) {
+        runCatching {
+            val existing = tripDao.getTripById(tripId) ?: error("Trip not found: $tripId")
+            val updated = existing.copy(
+                startedAt = startedAt,
+                endedAt = endedAt,
+                updatedAt = System.currentTimeMillis()
+            )
+            tripDao.updateTrip(updated)
+        }
+    }
+
+    override suspend fun recalculateTripDistance(tripId: String): Result<Long> = withContext(ioDispatcher) {
+        runCatching {
+            val points = trackPointDao.getTrackPointsByTrip(tripId).sortedBy { it.timestamp }
+            var totalMeters = 0.0
+            var prev: com.mototrip.core.location.RawLocationPoint? = null
+            for (pt in points) {
+                val raw = com.mototrip.core.location.RawLocationPoint(
+                    timestamp = pt.timestamp,
+                    latitude = pt.latitude,
+                    longitude = pt.longitude,
+                    accuracyMeters = pt.accuracyMeters,
+                    speedMps = pt.speedMps,
+                    altitudeMeters = pt.altitudeMeters
+                )
+                val (shouldRecord, delta) = com.mototrip.core.location.LocationFilter.evaluateConsecutivePoint(prev, raw)
+                if (shouldRecord) {
+                    totalMeters += delta
+                    prev = raw
+                }
+            }
+            val finalMeters = totalMeters.toLong()
+            val existing = tripDao.getTripById(tripId)
+            if (existing != null) {
+                tripDao.updateTrip(existing.copy(distanceMeters = finalMeters, updatedAt = System.currentTimeMillis()))
+            }
+            finalMeters
         }
     }
 
@@ -376,7 +419,8 @@ class TripRepositoryImpl(
         liters = liters,
         odometerKm = odometerKm,
         stationName = stationName,
-        isFullTank = isFullTank
+        isFullTank = isFullTank,
+        notes = notes
     )
 
     private fun FuelEntry.toEntity() = FuelEntryEntity(
@@ -389,7 +433,8 @@ class TripRepositoryImpl(
         liters = liters,
         odometerKm = odometerKm,
         stationName = stationName,
-        isFullTank = isFullTank
+        isFullTank = isFullTank,
+        notes = notes
     )
 
     private fun ExpenseEntity.toDomain() = Expense(

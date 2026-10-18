@@ -19,7 +19,7 @@ data class BackupPayload(
     val tripEvents: List<TripEventEntity>
 ) {
     companion object {
-        const val CURRENT_SCHEMA_VERSION = 1
+        const val CURRENT_SCHEMA_VERSION = 2
     }
 }
 

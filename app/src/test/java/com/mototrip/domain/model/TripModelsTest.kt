@@ -92,16 +92,30 @@ class TripModelsTest {
     }
 
     @Test
-    fun stop_withValidValues_createdSuccessfully() {
-        val stop = Stop(
-            id = "stop-1",
+    fun fuelEntry_withAmountAndWithoutLiters_createdSuccessfully() {
+        val entry = FuelEntry(
+            id = "fuel-only-amount",
             tripId = "trip-1",
-            type = StopType.REST,
-            arrivedAt = 1700000500000L,
-            departedAt = 1700000800000L,
-            name = "Parador El Cóndor"
+            occurredAt = 1700000100000L,
+            amountMinorUnits = 500000L, // 5000 ARS
+            currencyCode = "ARS",
+            notes = "Carga rápida sin recordar los litros"
         )
-        assertEquals(StopType.REST, stop.type)
-        assertNotNull(stop.departedAt)
+        assertEquals(500000L, entry.amountMinorUnits)
+        assertEquals(null, entry.liters)
+        assertEquals("Carga rápida sin recordar los litros", entry.notes)
+    }
+
+    @Test
+    fun motorcycleConfig_boxerBM150_defaultsMatchSpecification() {
+        val moto = MotorcycleConfig()
+        assertEquals("Bajaj Boxer BM150", moto.modelName)
+        assertEquals(11.0, moto.tankCapacityLiters, 0.001)
+        assertEquals(2.5, moto.reserveLiters, 0.001)
+        assertEquals(1.90, moto.referenceConsumptionL100, 0.001)
+        // Reference efficiency: 100 / 1.90 ≈ 52.63 km/L
+        assertEquals(52.63, moto.referenceEfficiencyKmL, 0.1)
+        assertEquals(false, moto.isCapacityConfirmed)
+        assertEquals(false, moto.isReserveConfirmed)
     }
 }

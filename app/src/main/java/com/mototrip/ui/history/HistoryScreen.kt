@@ -177,6 +177,28 @@ fun HistoryScreen(
                                 importJsonLauncher.launch(arrayOf("application/json", "text/*"))
                             }
                         )
+                        DropdownMenuItem(
+                            text = { Text("Buscar actualizaciones") },
+                            onClick = {
+                                showMenu = false
+                                coroutineScope.launch {
+                                    snackbarHostState.showSnackbar("Consultando GitHub Releases...")
+                                    val app = context.applicationContext as MotoTripApp
+                                    app.appContainer.appUpdateManager.checkForUpdates().fold(
+                                        onSuccess = { info ->
+                                            if (info.isUpdateAvailable) {
+                                                snackbarHostState.showSnackbar("Nueva versión disponible (${info.latestVersion}). Volvé al inicio para actualizar.")
+                                            } else {
+                                                snackbarHostState.showSnackbar("Tenés instalada la versión más reciente (${info.currentVersion}).")
+                                            }
+                                        },
+                                        onFailure = { err ->
+                                            snackbarHostState.showSnackbar("Error al verificar actualizaciones: ${err.message ?: "Sin conexión"}")
+                                        }
+                                    )
+                                }
+                            }
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

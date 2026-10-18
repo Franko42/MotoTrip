@@ -47,6 +47,8 @@ interface TripRepository {
     ): Result<Unit>
 
     suspend fun updateTripMetadata(trip: Trip): Result<Unit>
+    suspend fun updateTripDates(tripId: String, startedAt: Long, endedAt: Long?): Result<Unit>
+    suspend fun recalculateTripDistance(tripId: String): Result<Long>
     suspend fun deleteTrip(tripId: String): Result<Unit>
 
     // Stops

@@ -48,7 +48,8 @@ fun MotoTripNavGraph(
             val homeViewModel: HomeViewModel = viewModel(
                 factory = HomeViewModel.provideFactory(
                     appContainer.getActiveTripUseCase,
-                    appContainer.startTripUseCase
+                    appContainer.startTripUseCase,
+                    appContainer.appUpdateManager
                 )
             )
             HomeScreen(
@@ -75,6 +76,7 @@ fun MotoTripNavGraph(
                     resumeTripUseCase = appContainer.resumeTripUseCase,
                     finishTripUseCase = appContainer.finishTripUseCase,
                     addStopUseCase = appContainer.addStopUseCase,
+                    updateStopUseCase = appContainer.updateStopUseCase,
                     addFuelEntryUseCase = appContainer.addFuelEntryUseCase,
                     addExpenseUseCase = appContainer.addExpenseUseCase,
                     tripRepository = appContainer.tripRepository
@@ -115,7 +117,13 @@ fun MotoTripNavGraph(
             val detailViewModel: TripDetailViewModel = viewModel(
                 factory = TripDetailViewModel.provideFactory(
                     tripId = tripId,
-                    tripRepository = appContainer.tripRepository
+                    tripRepository = appContainer.tripRepository,
+                    motorcycleConfigRepository = appContainer.motorcycleConfigRepository,
+                    updateTripMetadataUseCase = appContainer.updateTripMetadataUseCase,
+                    updateTripDatesUseCase = appContainer.updateTripDatesUseCase,
+                    recalculateTripDistanceUseCase = appContainer.recalculateTripDistanceUseCase,
+                    updateStopUseCase = appContainer.updateStopUseCase,
+                    updateFuelEntryUseCase = appContainer.updateFuelEntryUseCase
                 )
             )
             TripDetailScreen(

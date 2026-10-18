@@ -37,5 +37,6 @@ data class FuelEntryEntity(
     val liters: Double? = null,
     val odometerKm: Double? = null,
     val stationName: String? = null,
-    val isFullTank: Boolean = false
+    val isFullTank: Boolean = false,
+    val notes: String? = null
 )

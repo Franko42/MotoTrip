@@ -19,6 +19,9 @@ import com.mototrip.data.local.entity.TrackPointEntity
 import com.mototrip.data.local.entity.TripEntity
 import com.mototrip.data.local.entity.TripEventEntity
 
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
+
 @Database(
     entities = [
         TripEntity::class,
@@ -28,7 +31,7 @@ import com.mototrip.data.local.entity.TripEventEntity
         ExpenseEntity::class,
         TripEventEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -43,6 +46,12 @@ abstract class MotoTripDatabase : RoomDatabase() {
     companion object {
         const val DATABASE_NAME = "mototrip.db"
 
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE fuel_entries ADD COLUMN notes TEXT")
+            }
+        }
+
         @Volatile
         private var INSTANCE: MotoTripDatabase? = null
 
@@ -52,7 +61,10 @@ abstract class MotoTripDatabase : RoomDatabase() {
                     context.applicationContext,
                     MotoTripDatabase::class.java,
                     DATABASE_NAME
-                ).build().also { INSTANCE = it }
+                )
+                    .addMigrations(MIGRATION_1_2)
+                    .build()
+                    .also { INSTANCE = it }
             }
         }
     }

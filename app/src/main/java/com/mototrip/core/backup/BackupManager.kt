@@ -84,6 +84,7 @@ object BackupManager {
             obj.put("odometerKm", f.odometerKm ?: JSONObject.NULL)
             obj.put("stationName", f.stationName ?: JSONObject.NULL)
             obj.put("isFullTank", f.isFullTank)
+            obj.put("notes", f.notes ?: JSONObject.NULL)
             fuelArr.put(obj)
         }
         root.put("fuelEntries", fuelArr)
@@ -127,7 +128,7 @@ object BackupManager {
                 return BackupValidationResult.Corrupted("Falta el campo schemaVersion en el archivo de respaldo.")
             }
             val version = root.getInt("schemaVersion")
-            if (version != BackupPayload.CURRENT_SCHEMA_VERSION) {
+            if (version < 1 || version > BackupPayload.CURRENT_SCHEMA_VERSION) {
                 return BackupValidationResult.IncompatibleVersion(
                     foundVersion = version,
                     expectedVersion = BackupPayload.CURRENT_SCHEMA_VERSION
@@ -212,7 +213,8 @@ object BackupManager {
                         liters = if (o.isNull("liters")) null else o.optDouble("liters"),
                         odometerKm = if (o.isNull("odometerKm")) null else o.optDouble("odometerKm"),
                         stationName = if (o.isNull("stationName")) null else o.optString("stationName"),
-                        isFullTank = o.optBoolean("isFullTank", false)
+                        isFullTank = o.optBoolean("isFullTank", false),
+                        notes = if (o.isNull("notes")) null else o.optString("notes")
                     )
                 )
             }
@@ -281,9 +283,9 @@ object BackupManager {
         val sb = StringBuilder()
 
         // Section: Trip Summary
-        sb.appendLine("TIPO,ID,NOMBRE,ORIGEN,DESTINO,ESTADO,DISTANCIA_KM,FECHA_INICIO,FECHA_FIN")
+        sb.appendLine("TIPO,ID,NOMBRE,ORIGEN,DESTINO,ESTADO,DISTANCIA_KM,FECHA_INICIO,FECHA_FIN,FECHA_CREACION")
         val distKm = trip.distanceMeters / 1000.0
-        sb.appendLine("VIAJE,\"${escapeCsv(trip.id)}\",\"${escapeCsv(trip.name)}\",\"${escapeCsv(trip.originName.orEmpty())}\",\"${escapeCsv(trip.destinationName.orEmpty())}\",${trip.status.name},$distKm,${trip.startedAt},${trip.endedAt ?: ""}")
+        sb.appendLine("VIAJE,\"${escapeCsv(trip.id)}\",\"${escapeCsv(trip.name)}\",\"${escapeCsv(trip.originName.orEmpty())}\",\"${escapeCsv(trip.destinationName.orEmpty())}\",${trip.status.name},$distKm,${trip.startedAt},${trip.endedAt ?: ""},${trip.createdAt}")
         sb.appendLine()
 
         // Section: Stops
@@ -294,11 +296,11 @@ object BackupManager {
         sb.appendLine()
 
         // Section: Fuel
-        sb.appendLine("TIPO,ID,FECHA,IMPORTE,MONEDA,LITROS,PRECIO_POR_LITRO,ODOMETRO_KM,ESTACION,TANQUE_LLENO")
+        sb.appendLine("TIPO,ID,FECHA,IMPORTE,MONEDA,LITROS,PRECIO_POR_LITRO,ODOMETRO_KM,ESTACION,TANQUE_LLENO,NOTAS")
         fuelEntries.forEach { f ->
             val amount = f.amountMinorUnits / 100.0
             val pricePerLiter = if (f.liters != null && f.liters > 0) amount / f.liters else 0.0
-            sb.appendLine("COMBUSTIBLE,\"${escapeCsv(f.id)}\",${f.occurredAt},$amount,${f.currencyCode},${f.liters ?: ""},$pricePerLiter,${f.odometerKm ?: ""},\"${escapeCsv(f.stationName.orEmpty())}\",${f.isFullTank}")
+            sb.appendLine("COMBUSTIBLE,\"${escapeCsv(f.id)}\",${f.occurredAt},$amount,${f.currencyCode},${f.liters ?: ""},$pricePerLiter,${f.odometerKm ?: ""},\"${escapeCsv(f.stationName.orEmpty())}\",${f.isFullTank},\"${escapeCsv(f.notes.orEmpty())}\"")
         }
         sb.appendLine()
 

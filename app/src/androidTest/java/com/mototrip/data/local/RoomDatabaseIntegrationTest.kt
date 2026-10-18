@@ -138,7 +138,8 @@ class RoomDatabaseIntegrationTest {
             tripId = "trip-3",
             stopId = "stop-3",
             occurredAt = 3006L,
-            amountMinorUnits = 500000L
+            amountMinorUnits = 500000L,
+            notes = "Carga de prueba"
         )
         db.fuelEntryDao().insertFuelEntry(fuel)
 
@@ -149,6 +150,7 @@ class RoomDatabaseIntegrationTest {
         val retrievedFuel = db.fuelEntryDao().getFuelEntryById("fuel-3")
         assertNotNull(retrievedFuel)
         assertNull(retrievedFuel?.stopId)
+        assertEquals("Carga de prueba", retrievedFuel?.notes)
     }
 
     @Test

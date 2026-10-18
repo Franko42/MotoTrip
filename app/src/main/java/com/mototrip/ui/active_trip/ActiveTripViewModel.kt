@@ -33,6 +33,7 @@ class ActiveTripViewModel(
     private val resumeTripUseCase: ResumeTripUseCase,
     private val finishTripUseCase: FinishTripUseCase,
     private val addStopUseCase: AddStopUseCase,
+    private val updateStopUseCase: com.mototrip.domain.usecase.UpdateStopUseCase,
     private val addFuelEntryUseCase: AddFuelEntryUseCase,
     private val addExpenseUseCase: AddExpenseUseCase,
     private val tripRepository: TripRepository
@@ -88,11 +89,19 @@ class ActiveTripViewModel(
                 tripId = tripId,
                 type = type,
                 arrivedAt = System.currentTimeMillis(),
+                departedAt = null,
                 name = name?.takeIf { it.isNotBlank() },
                 notes = notes?.takeIf { it.isNotBlank() }
             )
             addStopUseCase(stop)
                 .onFailure { _userMessage.emit(it.message ?: "Error al registrar la parada") }
+        }
+    }
+
+    fun departStop(stop: Stop) {
+        viewModelScope.launch {
+            updateStopUseCase(stop.copy(departedAt = System.currentTimeMillis()))
+                .onFailure { _userMessage.emit(it.message ?: "Error al registrar la salida de la parada") }
         }
     }
 
@@ -103,6 +112,7 @@ class ActiveTripViewModel(
         odometerKm: Double?,
         stationName: String?,
         isFullTank: Boolean,
+        notes: String?,
         stopId: String?
     ) {
         viewModelScope.launch {
@@ -117,7 +127,8 @@ class ActiveTripViewModel(
                 liters = liters,
                 odometerKm = odometerKm,
                 stationName = stationName?.takeIf { it.isNotBlank() },
-                isFullTank = isFullTank
+                isFullTank = isFullTank,
+                notes = notes?.takeIf { it.isNotBlank() }
             )
             addFuelEntryUseCase(entry)
                 .onFailure { _userMessage.emit(it.message ?: "Error al registrar combustible") }
@@ -156,6 +167,7 @@ class ActiveTripViewModel(
             resumeTripUseCase: ResumeTripUseCase,
             finishTripUseCase: FinishTripUseCase,
             addStopUseCase: AddStopUseCase,
+            updateStopUseCase: com.mototrip.domain.usecase.UpdateStopUseCase,
             addFuelEntryUseCase: AddFuelEntryUseCase,
             addExpenseUseCase: AddExpenseUseCase,
             tripRepository: TripRepository
@@ -169,6 +181,7 @@ class ActiveTripViewModel(
                     resumeTripUseCase,
                     finishTripUseCase,
                     addStopUseCase,
+                    updateStopUseCase,
                     addFuelEntryUseCase,
                     addExpenseUseCase,
                     tripRepository

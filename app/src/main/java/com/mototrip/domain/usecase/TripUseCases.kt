@@ -78,3 +78,28 @@ class AddExpenseUseCase(private val repository: TripRepository) {
 class DeleteTripUseCase(private val repository: TripRepository) {
     suspend operator fun invoke(tripId: String): Result<Unit> = repository.deleteTrip(tripId)
 }
+
+class UpdateTripMetadataUseCase(private val repository: TripRepository) {
+    suspend operator fun invoke(trip: Trip): Result<Unit> = repository.updateTripMetadata(trip)
+}
+
+class UpdateTripDatesUseCase(private val repository: TripRepository) {
+    suspend operator fun invoke(tripId: String, startedAt: Long, endedAt: Long?): Result<Unit> =
+        repository.updateTripDates(tripId, startedAt, endedAt)
+}
+
+class UpdateStopUseCase(private val repository: TripRepository) {
+    suspend operator fun invoke(stop: Stop): Result<Unit> = repository.updateStop(stop)
+}
+
+class UpdateFuelEntryUseCase(private val repository: TripRepository) {
+    suspend operator fun invoke(entry: FuelEntry): Result<Unit> = repository.updateFuelEntry(entry)
+}
+
+class UpdateExpenseUseCase(private val repository: TripRepository) {
+    suspend operator fun invoke(expense: Expense): Result<Unit> = repository.updateExpense(expense)
+}
+
+class RecalculateTripDistanceUseCase(private val repository: TripRepository) {
+    suspend operator fun invoke(tripId: String): Result<Long> = repository.recalculateTripDistance(tripId)
+}
